@@ -1,7 +1,7 @@
 ```javascript
-import { saveSettingsDebounced } from "../../../../script.js";
-import { extension_settings, getContext } from "../../../extensions.js";
-import { generateQuietPrompt } from "../../../slash-commands.js";
+import { saveSettingsDebounced } from "../../../script.js";
+import { extension_settings, getContext } from "../../extensions.js";
+import { generateQuietPrompt } from "../../slash-commands.js";
 
 const extensionName = "theater-auto-gen";
 const defaultSettings = {
@@ -16,7 +16,7 @@ let currentToast = null;
 
 async function loadSettings() {
   if (!extension_settings[extensionName]) {
-    extension_settings[extensionName] = defaultSettings;
+    extension_settings[extensionName] = { ...defaultSettings };
   }
   return extension_settings[extensionName];
 }
@@ -41,8 +41,10 @@ function showToast(message, type = 'info', duration = 3000) {
   if (duration > 0) {
     setTimeout(() => {
       toast.classList.remove('show');
-      setTimeout(() => toast.remove(), 300);
-      if (currentToast === toast) currentToast = null;
+      setTimeout(() => {
+        if (toast.parentNode) toast.remove();
+        if (currentToast === toast) currentToast = null;
+      }, 300);
     }, duration);
   }
 
@@ -50,7 +52,7 @@ function showToast(message, type = 'info', duration = 3000) {
 }
 
 function updateToast(toast, message, type) {
-  if (!toast) return;
+  if (!toast || !toast.parentNode) return;
   toast.textContent = message;
   toast.className = `theater-toast theater-toast-${type} show`;
 }
@@ -105,7 +107,7 @@ async function generateTheaterWithRetry(targetMessageIndex = null) {
   }
 
   if (!generatedText || generatedText.trim() === '') {
-    progressToast.remove();
+    if (progressToast.parentNode) progressToast.remove();
     showToast(`❌ 小剧场生成失败: ${lastError?.message || '未知错误'}`, 'error', 5000);
     isGenerating = false;
     return;
@@ -114,7 +116,7 @@ async function generateTheaterWithRetry(targetMessageIndex = null) {
   const messageIndex = targetMessageIndex !== null ? targetMessageIndex : context.chat.length - 1;
 
   if (messageIndex < 0 || messageIndex >= context.chat.length) {
-    progressToast.remove();
+    if (progressToast.parentNode) progressToast.remove();
     showToast('❌ 目标消息不存在', 'error', 3000);
     isGenerating = false;
     return;
@@ -123,14 +125,14 @@ async function generateTheaterWithRetry(targetMessageIndex = null) {
   const targetMessage = context.chat[messageIndex];
 
   if (targetMessage.is_user) {
-    progressToast.remove();
+    if (progressToast.parentNode) progressToast.remove();
     showToast('⚠️ 无法为用户消息生成小剧场', 'warning', 3000);
     isGenerating = false;
     return;
   }
 
   targetMessage.mes += `\n\n${generatedText}`;
-  context.saveChat();
+  await context.saveChat();
 
   const messageElement = document.querySelector(`#chat .mes[mesid="${messageIndex}"]`);
   if (messageElement) {
@@ -141,7 +143,9 @@ async function generateTheaterWithRetry(targetMessageIndex = null) {
   }
 
   updateToast(progressToast, '✅ 小剧场生成完成', 'success');
-  setTimeout(() => progressToast.remove(), 2000);
+  setTimeout(() => {
+    if (progressToast.parentNode) progressToast.remove();
+  }, 2000);
 
   console.log(`[${extensionName}] 小剧场已注入到消息 #${messageIndex}`);
   isGenerating = false;
@@ -225,32 +229,41 @@ function addRegenerateButton() {
     if (isGenerating) return;
 
     button.classList.add('generating');
-    await generateTheaterWithRetry();
-    button.classList.remove('generating');
+    try {
+      await generateTheaterWithRetry();
+    } finally {
+      button.classList.remove('generating');
+    }
   });
 
   document.body.appendChild(button);
 }
 
 jQuery(async () => {
+  console.log(`[${extensionName}] 开始初始化...`);
+
   await loadSettings();
   addRegenerateButton();
 
-  // 监听角色回复完成事件
   const context = getContext();
 
-  // 使用 MutationObserver 监听新消息
   const chatObserver = new MutationObserver(async (mutations) => {
     for (const mutation of mutations) {
       if (mutation.addedNodes.length > 0) {
         const settings = extension_settings[extensionName];
         if (!settings.enabled) continue;
 
-        // 等待消息渲染完成
-        await new Promise(resolve => setTimeout(resolve, 800));
+        const hasNewMessage = Array.from(mutation.addedNodes).some(
+          node => node.classList && node.classList.contains('mes')
+        );
+
+        if (!hasNewMessage) continue;
+
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
         const lastMessage = context.chat[context.chat.length - 1];
-        if (lastMessage && !lastMessage.is_user) {
+
+        if (lastMessage && !lastMessage.is_user && !lastMessage.is_system) {
           await generateTheaterWithRetry(context.chat.length - 1);
         }
       }
@@ -263,8 +276,11 @@ jQuery(async () => {
       childList: true,
       subtree: false
     });
+    console.log(`[${extensionName}] MutationObserver 已启动`);
+  } else {
+    console.error(`[${extensionName}] 找不到 #chat 元素`);
   }
 
-  console.log(`[${extensionName}] 扩展已加载`);
+  console.log(`[${extensionName}] 扩展加载完成`);
 });
 ```
