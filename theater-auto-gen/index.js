@@ -1,7 +1,7 @@
 ```javascript
-import { saveSettingsDebounced } from "../script.js";
-import { extension_settings, getContext } from "./extensions.js";
-import { generateQuietPrompt } from "../slash-commands.js";
+import { saveSettingsDebounced } from "../../../../script.js";
+import { extension_settings, getContext } from "../extensions.js";
+import { generateQuietPrompt } from "../../../../slash-commands.js";
 import { callPopup, POPUP_TYPE } from "./popup.js";
 
 const extensionName = "theater-auto-gen";
@@ -357,9 +357,20 @@ await loadSettings();
 
 addRegenerateButton();
 
-eventSource.on(event_types.MESSAGE_RECEIVED, async (messageIndex) => {
-if (messageIndex < 0) return;
-if (!extension_settings[extensionName].enabled) return;
+jQuery(async () => {
+    // 确保ST完全加载
+    while (!window.SillyTavern) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    const context = getContext();
+
+    // 使用ST的事件系统
+    eventSource.on(event_types.MESSAGE_RECEIVED, async (messageIndex) => {
+        // 你的逻辑
+    });
+});
+
 
 await new Promise(resolve => setTimeout(resolve, 800));
 
@@ -369,4 +380,5 @@ await generateTheaterWithRetry(messageIndex);
 console.log(`[${extensionName}] 扩展已加载`);
 });
 ```
+
 
