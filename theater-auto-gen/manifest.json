@@ -6,10 +6,10 @@
   "optional": [],
   "js": "index.js",
   "css": "",
+  "settings_html": "settings.html",
   "author": "lingfeng629-lab",
   "version": "1.0.0",
   "homePage": "https://github.com/lingfeng629-lab/theater-auto-gen",
   "auto_update": true
 }
 ```
-
