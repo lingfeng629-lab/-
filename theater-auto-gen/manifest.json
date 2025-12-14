@@ -6,9 +6,9 @@
   "optional": [],
   "js": "index.js",
   "css": "",
-  "author": "Custom",
+  "author": "lingfeng629-lab",
   "version": "1.0.0",
-  "homePage": "",
-  "auto_update": false
+  "homePage": "https://github.com/lingfeng629-lab/ST-Theater-AutoGen",
+  "auto_update": true
 }
 ```
