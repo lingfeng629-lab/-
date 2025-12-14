@@ -37,28 +37,31 @@
 
 <script>
 jQuery(async () => {
-const settingsKey = 'theater-auto-gen';
-const settings = extension_settings[settingsKey];
+  const { saveSettingsDebounced } = await import('../../../script.js');
+  const { extension_settings } = await import('../../extensions.js');
 
-$('#theater_enabled').prop('checked', settings.enabled).on('change', function() {
-settings.enabled = this.checked;
-saveSettingsDebounced();
-});
+  const settingsKey = 'theater-auto-gen';
+  const settings = extension_settings[settingsKey];
 
-$('#theater_max_retries').val(settings.maxRetries).on('input', function() {
-settings.maxRetries = parseInt(this.value) || 3;
-saveSettingsDebounced();
-});
+  $('#theater_enabled').prop('checked', settings.enabled).on('change', function() {
+    settings.enabled = this.checked;
+    saveSettingsDebounced();
+  });
 
-$('#theater_retry_delay').val(settings.retryDelay).on('input', function() {
-settings.retryDelay = parseInt(this.value) || 2000;
-saveSettingsDebounced();
-});
+  $('#theater_max_retries').val(settings.maxRetries).on('input', function() {
+    settings.maxRetries = parseInt(this.value) || 3;
+    saveSettingsDebounced();
+  });
 
-$('#theater_prompt').val(settings.theaterPrompt).on('input', function() {
-settings.theaterPrompt = this.value;
-saveSettingsDebounced();
-});
+  $('#theater_retry_delay').val(settings.retryDelay).on('input', function() {
+    settings.retryDelay = parseInt(this.value) || 2000;
+    saveSettingsDebounced();
+  });
+
+  $('#theater_prompt').val(settings.theaterPrompt).on('input', function() {
+    settings.theaterPrompt = this.value;
+    saveSettingsDebounced();
+  });
 });
 </script>
 
@@ -77,4 +80,5 @@ border: 1px solid #ccc;
 border-radius: 4px;
 }
 </style>
+
 ```
