@@ -1,0 +1,14 @@
+```json
+{
+  "display_name": "小剧场自动生成器",
+  "loading_order": 100,
+  "requires": [],
+  "optional": [],
+  "js": "index.js",
+  "css": "",
+  "author": "Custom",
+  "version": "1.0.0",
+  "homePage": "",
+  "auto_update": false
+}
+```
